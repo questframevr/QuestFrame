@@ -15,6 +15,9 @@ import com.droiddeck.launcher.gpu.GpuInfo.Family
  *   their own numbers: the pair is the newest of each, of one flavour (Balanced or Performance).
  * - DroidDeck's DD-Turnip ships both halves in one zip per release (DriverBundle): the pair is the
  *   newest bundle, and it can never be mixed.
+ * - On a Meta Quest the one deliberate mix: Banners-Turnip 6xx/7xx for the runtime with the newest
+ *   DD-Turnip's display half ([QUEST]). Banners' Android build garbles the Quest's screen buffers;
+ *   the display half only copies finished frames, so it needs nothing Banners adds.
  */
 object DriverPairs {
     const val BANNER = "banner"
@@ -24,6 +27,7 @@ object DriverPairs {
     const val WN_BALANCED = "wn-b"
     const val WN_PERFORMANCE = "wn-p"
     const val DD_TURNIP = "dd-turnip"
+    const val QUEST = "quest-banner-dd"
     /** Each DD-Turnip release is its own pair: "dd-turnip:DD-Turnip-v0.1.0". */
     fun ddTurnip(tag: String) = "$DD_TURNIP:$tag"
 
@@ -37,15 +41,20 @@ object DriverPairs {
         val linux: TurnipReleases.Asset?,
         /** Both halves in one zip, instead of [display] and [linux]. */
         val bundle: TurnipReleases.Asset? = null,
+        /** A bundle whose display half is this pair's display half (with [linux] for the runtime). */
+        val displayBundle: TurnipReleases.Asset? = null,
+        /** Only offered on a Meta Quest. */
+        val questOnly: Boolean = false,
     ) {
-        val complete: Boolean get() = bundle != null || (display != null && linux != null)
+        val complete: Boolean get() = bundle != null || ((display != null || displayBundle != null) && linux != null)
         /** The zips to download for the pair: the bundle, or the two halves. */
-        val assets: List<TurnipReleases.Asset> get() = listOfNotNull(bundle ?: display, if (bundle == null) linux else null)
+        val assets: List<TurnipReleases.Asset>
+            get() = if (bundle != null) listOf(bundle) else listOfNotNull(displayBundle ?: display, linux)
         /** "r4 · 1.19 + 0.1.2": the build of each half. */
         val version: String
-            get() = listOfNotNull(bundle?.tag, display?.tag, linux?.tag).distinct().joinToString(" + ") { it.removePrefix("linux-").removePrefix("DD-Turnip-") }
-        fun suits(gpu: GpuInfo) = gpu.family in families ||
-            (gpu.family == Family.ADRENO_UNKNOWN && (Family.A7XX in families || Family.A8XX in families))
+            get() = listOfNotNull(bundle?.tag, displayBundle?.tag, display?.tag, linux?.tag).distinct().joinToString(" + ") { it.removePrefix("linux-").removePrefix("DD-Turnip-") }
+        fun suits(gpu: GpuInfo) = (!questOnly || gpu.quest) && (gpu.family in families ||
+            (gpu.family == Family.ADRENO_UNKNOWN && (Family.A7XX in families || Family.A8XX in families)))
     }
 
     private val ALL_ADRENO = setOf(Family.A6XX, Family.A7XX, Family.A7XX_LOW, Family.A8XX, Family.ADRENO_UNKNOWN)
@@ -60,6 +69,7 @@ object DriverPairs {
         BANNER_A8XX -> "Banners-Turnip · Adreno 8xx" to setOf(Family.A8XX)
         BANNER_710 -> "Banners-Turnip · Adreno 710/720/722 (test)" to setOf(Family.A7XX_LOW)
         BANNER_ONEUI -> "Banners-Turnip · 8 Gen 2 on One UI" to setOf(Family.A7XX)
+        QUEST -> "Banners-Turnip · DD-Turnip display (Quest)" to setOf(Family.A6XX, Family.A7XX)
         WN_BALANCED -> "WinNative · Balanced" to ALL_ADRENO
         WN_PERFORMANCE -> "WinNative · Performance" to ALL_ADRENO
         else -> key to ALL_ADRENO
@@ -83,21 +93,30 @@ object DriverPairs {
                 val sameRelease = !key.startsWith(BANNER) || display?.tag == linux?.tag
                 DriverPair(key, name, families, display, if (sameRelease) linux else null)
             }
+            .let { pairs -> pairs + listOfNotNull(questPair(pairs)) }
+    }
+
+    /** Banners-Turnip 6xx/7xx's runtime half with the newest DD-Turnip's display half, if both are listed. */
+    private fun questPair(pairs: List<DriverPair>): DriverPair? {
+        val banner = pairs.firstOrNull { it.key == BANNER && it.complete } ?: return null
+        val dd = pairs.firstOrNull { it.key == newestDdTurnip(pairs) }?.bundle ?: return null
+        val (name, families) = describeFixed(QUEST)
+        return DriverPair(QUEST, name, families, null, banner.linux, displayBundle = dd, questOnly = true)
     }
 
     /**
      * The pair Auto sets for [gpu], among the [pairs] the last release check found: the newest
      * official DD-Turnip release on the Adreno 840 (840 and 840v2), WinNative Balanced on the other
      * 8xx (Banners' A8xx builds still break on some first boots) and on an 840 while no DD-Turnip
-     * release is listed, the OneUI build for an 8 Gen 2 under One UI, the patched test builds for
+     * release is listed, [QUEST] on a Meta Quest, the OneUI build for an 8 Gen 2 under One UI, the patched test builds for
      * the 710/720/722, and upstream Banners-Turnip for the rest. Null when nothing fits (not Adreno).
      */
     fun recommendedKey(gpu: GpuInfo, pairs: List<DriverPair>): String? = when (gpu.family) {
         Family.NOT_ADRENO -> null
         Family.A8XX -> if (gpu.model == 840) newestDdTurnip(pairs) ?: WN_BALANCED else WN_BALANCED
         Family.A7XX_LOW -> BANNER_710
-        Family.A7XX -> if (gpu.oneUi8Gen2) BANNER_ONEUI else BANNER
-        Family.A6XX -> BANNER
+        Family.A7XX -> if (gpu.quest) QUEST else if (gpu.oneUi8Gen2) BANNER_ONEUI else BANNER
+        Family.A6XX -> if (gpu.quest) QUEST else BANNER
         // KGSL gave no model: Android 16 arrived with the 8xx, so a device that new is taken as one.
         Family.ADRENO_UNKNOWN -> if (android.os.Build.VERSION.SDK_INT >= 36) WN_BALANCED else BANNER
     }

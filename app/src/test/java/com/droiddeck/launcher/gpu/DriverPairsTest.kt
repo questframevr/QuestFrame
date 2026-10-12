@@ -55,6 +55,30 @@ class DriverPairsTest {
     }
 
     @Test
+    fun questGetsBannersRuntimeWithDdTurnipDisplay() {
+        val quest = GpuInfo("Adreno 740", 740, Family.A7XX, "", false, quest = true)
+        assertEquals(DriverPairs.QUEST, DriverPairs.recommendedKey(quest, emptyList()))
+        val dd = asset("DD-Turnip-v0.2.0.zip", "DD-Turnip-v0.2.0", false, DriverPairs.ddTurnip("DD-Turnip-v0.2.0")).let {
+            TurnipReleases.Asset(it.source, it.tag, it.name, it.url, it.size, false, it.label, it.sha256, it.pair, bundle = true)
+        }
+        val check = TurnipReleases.Check(
+            listOf(
+                asset("Turnip-r2.zip", "r2", false, DriverPairs.BANNER),
+                asset("Turnip-r2-Linux.zip", "r2", true, DriverPairs.BANNER),
+                dd,
+            ),
+            emptyList(), emptyList(), 0,
+        )
+        val pair = DriverPairs.from(check).single { it.key == DriverPairs.QUEST }
+        assertTrue(pair.complete)
+        assertEquals(dd, pair.displayBundle)
+        assertEquals("Turnip-r2-Linux.zip", pair.linux?.name)
+        assertEquals(listOf("DD-Turnip-v0.2.0.zip", "Turnip-r2-Linux.zip"), pair.assets.map { it.name })
+        assertTrue(pair.suits(quest))
+        assertFalse("never offered off a Quest", pair.suits(gpu(740)))
+    }
+
+    @Test
     fun pairsMatchHalvesAndNeverMixBannersReleases() {
         val check = TurnipReleases.Check(
             listOf(
@@ -89,7 +113,8 @@ class DriverPairsTest {
                 asset("Turnip-r4-Linux.zip", "r4", true, DriverPairs.BANNER)),
             emptyList(), emptyList(), 0L,
         ))
-        assertEquals(listOf(DriverPairs.ddTurnip("DD-Turnip-v0.2.0"), DriverPairs.ddTurnip("DD-Turnip-v0.1.0"), DriverPairs.BANNER), pairs.map { it.key })
+        // The Quest pair (newest DD-Turnip display + Banners runtime) is listed last; only a Quest is offered it.
+        assertEquals(listOf(DriverPairs.ddTurnip("DD-Turnip-v0.2.0"), DriverPairs.ddTurnip("DD-Turnip-v0.1.0"), DriverPairs.BANNER, DriverPairs.QUEST), pairs.map { it.key })
         val dd = pairs.first()
         assertTrue(dd.complete)
         assertEquals(listOf(newer), dd.assets)

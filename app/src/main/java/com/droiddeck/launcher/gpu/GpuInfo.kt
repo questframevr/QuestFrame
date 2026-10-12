@@ -26,6 +26,12 @@ data class GpuInfo(
     val kgslName: String = "",
     /** Where [model] came from: "kernel", "vulkan" or "platform", "" when unknown. */
     val modelSource: String = "",
+    /**
+     * A Meta Quest (Horizon OS). Its display stack lays out the compositor's screen buffers in a
+     * way Banners-Turnip's Android build gets wrong (the picture is garbled), while DD-Turnip's is
+     * right; the runtime side runs Banners-Turnip fine.
+     */
+    val quest: Boolean = false,
 ) {
     enum class Family(val label: String) {
         A8XX("Adreno 8xx"),
@@ -101,6 +107,8 @@ data class GpuInfo(
                 model = model, family = family, soc = soc,
                 oneUi8Gen2 = samsung && model == 740,
                 kgslName = raw.orEmpty(), modelSource = source,
+                quest = Build.MANUFACTURER.equals("Oculus", ignoreCase = true) ||
+                    Build.MANUFACTURER.equals("Meta", ignoreCase = true),
             )
         }
 

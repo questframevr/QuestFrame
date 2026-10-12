@@ -122,7 +122,11 @@ internal class DriverMenus(private val activity: Activity, private val ui: Handl
         val recommended = DriverPairs.recommendedKey(gpu, pairs)
         pairRows = pairs.map { p ->
             val bundle = p.bundle?.let { installedBundle(it) }
-            val displayId = if (p.bundle != null) bundle?.androidId else p.display?.let { TurnipReleases.installedId(activity, it, td::isInstalled) }
+            val displayId = when {
+                p.bundle != null -> bundle?.androidId
+                p.displayBundle != null -> installedBundle(p.displayBundle)?.androidId
+                else -> p.display?.let { TurnipReleases.installedId(activity, it, td::isInstalled) }
+            }
             val linuxId = if (p.bundle != null) bundle?.linuxId else p.linux?.let { TurnipReleases.installedId(activity, it, lm::isInstalled) }
             val mb = p.assets.sumOf { it.size } / 1_048_576.0
             PairRow(
@@ -211,7 +215,12 @@ internal class DriverMenus(private val activity: Activity, private val ui: Handl
                     installedIdOf(asset)
                         ?: installAsset(asset) { pct -> ui.post { pairPercent = (i * 100 + pct) / zips.size } }.also { downloaded = true }
                 }
-                if (pair.bundle != null) DriverBundle.get(activity, ids[0])!!.let { listOf(it.androidId, it.linuxId) } else ids
+                when {
+                    pair.bundle != null -> DriverBundle.get(activity, ids[0])!!.let { listOf(it.androidId, it.linuxId) }
+                    // A bundle's display half with another release's runtime half (the Quest pair).
+                    pair.displayBundle != null -> listOf(DriverBundle.get(activity, ids[0])!!.androidId, ids[1])
+                    else -> ids
+                }
             }
             ui.post {
                 pairBusy = null

@@ -1072,6 +1072,14 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback {
             // (nativeSetUbwc had no caller), so there was no way to tell a UBWC layout mismatch
             // from any other cause of a garbled picture. Without a line the default (on) stands.
             CompositorEnv.ubwc(this)?.let { WaylandCompositor.nativeSetUbwc(it) }
+            // DROIDDECK_COMPOSITOR_<NAME>=value lines: driver options (TU_DEBUG, FD_DEV_FEATURES)
+            // for the compositor's own Turnip, which loads with the compositor below.
+            try {
+                CompositorEnv.applyDriverEnv(this).takeIf { it.isNotEmpty() }
+                    ?.let { Log.i(TAG, "compositor driver environment: $it") }
+            } catch (e: Exception) {
+                Log.w(TAG, "compositor driver environment", e)
+            }
         }
         CompositorHost.startOrAttach(
             holder.surface, runtimeDir.path,
