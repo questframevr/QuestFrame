@@ -13,12 +13,32 @@
  * The answer comes from the context's retired timestamp, compared the way KGSL compares them
  * (with wrap-around). Anything the read does not answer - an unknown context, a device that is not
  * KGSL - goes to the kernel as before. BL_NO_KGSL_POLL_FIX=1 turns it off.
+ *
+ * Every timestamp read here and in the driver goes through kgsl_timestamp_compat.h, which answers
+ * it from the memstore where the kernel refuses it (Horizon OS denies 0x916 to apps).
  */
 #define _GNU_SOURCE
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+
+#define DD_KGSL_NOTE(msg) kgsl_timestamp_note(msg)
+static void kgsl_timestamp_note(const char *msg);
+
+#include "../../../app/src/main/cpp/kgsl_timestamp_compat.h"
+
+/* Once per process, on stderr where the session log picks it up. */
+static void kgsl_timestamp_note(const char *msg) {
+  char line[160];
+  int length = snprintf(line, sizeof(line), "[blsession] %s\n", msg);
+  if (length > 0) {
+    ssize_t ignored = write(2, line, (size_t)length);
+    (void)ignored;
+  }
+}
 
 #define KGSL_IOC_TYPE 0x09
 #define KGSL_TIMESTAMP_RETIRED 0x00000002
@@ -58,13 +78,14 @@ __attribute__((visibility("hidden"))) int bl_kgsl_poll(int (*real)(int, unsigned
   struct kgsl_cmdstream_readtimestamp_ctxtid read;
   int saved = errno;
 
+  if (dd_kgsl_timestamp_compat(real, fd, request, arg, rc)) return 1;
   if (request != IOCTL_KGSL_DEVICE_WAITTIMESTAMP_CTXTID || arg == NULL || wait->timeout != 0 ||
       !enabled())
     return 0;
   read.context_id = wait->context_id;
   read.type = KGSL_TIMESTAMP_RETIRED;
   read.timestamp = 0;
-  if (real(fd, IOCTL_KGSL_CMDSTREAM_READTIMESTAMP_CTXTID, &read) != 0) {
+  if (dd_kgsl_read_timestamp(real, fd, (struct dd_kgsl_cmdstream_readtimestamp_ctxtid *)&read) != 0) {
     errno = saved;
     return 0;
   }
