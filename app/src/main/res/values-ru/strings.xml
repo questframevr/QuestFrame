@@ -254,6 +254,9 @@
     <string name="mode_controller">Контроллер</string>
     <string name="mode_controller_hint">Как Steam распознает ваш контроллер. Вступит в силу в следующей сессии.</string>
     <string name="mode_controller_deck">Контроллер Steam Deck</string>
+    <string name="mode_controller_steam">Steam Controller</string>
+    <string name="mode_controller_ds4">DualShock 4</string>
+    <string name="mode_controller_dualsense">DualSense</string>
     <string name="mode_controller_x360">Контроллер Xbox 360</string>
     <string name="mode_controller_note">Deck: кнопка быстрого доступа и гироскоп. Xbox 360: используйте Guide+A для быстрого доступа.</string>
     <string name="mode_back">Назад</string>
@@ -593,9 +596,6 @@
     <string name="setup_choose_home">Выбрать главный экран</string>
     <string name="setup_choose">Выбрать</string>
     <string name="setup_linux_apps">Приложения Linux (бета)</string>
-    <string name="setup_store">Магазин Flathub</string>
-    <string name="setup_store_on">Показывается в меню. Некоторые приложения могут не запускаться; журналы в Download/DroidDeck.</string>
-    <string name="setup_store_off">Устанавливать приложения и игры Linux из Flathub</string>
     <string name="setup_tool_files">Файлы</string>
     <string name="setup_tool_files_hint">Просмотр и управление файлами</string>
     <string name="setup_tool_protons">Версии Proton</string>

@@ -4,12 +4,15 @@ import android.content.Context
 import android.content.pm.ActivityInfo
 import androidx.annotation.StringRes
 import com.droiddeck.launcher.R
+import com.droiddeck.launcher.core.GameEnvironment
 import com.droiddeck.launcher.core.TextureFiltering
 import com.droiddeck.launcher.gpu.ScreenEffects
 import org.json.JSONObject
 
 /** The in-session switches: the HUD and how the on-screen controls decide to appear. */
 object SessionPrefs {
+    data class GameTextureFiltering(val anisotropy: Int? = null, val lodBias: String? = null)
+
     const val SUSPEND_AUTO = "auto"
     const val SUSPEND_NATIVE = "native"
     const val SUSPEND_MANUAL = "manual"
@@ -19,6 +22,9 @@ object SessionPrefs {
 
     const val CONTROLLER_DECK = "deck"
     const val CONTROLLER_XBOX360 = "xbox360"
+    const val CONTROLLER_STEAM = "steamcontroller"
+    const val CONTROLLER_DS4 = "dualshock4"
+    const val CONTROLLER_DUALSENSE = "dualsense"
     const val OSC_AUTO = "auto"
     const val OSC_ALWAYS = "always"
     const val OSC_STEAM_QAM = "steam-qam"
@@ -65,15 +71,7 @@ object SessionPrefs {
         prefs(context).edit().putBoolean("animations", on).apply()
     }
 
-    /** The Flathub Store (beta): its rail item. Off by default. */
-    fun storeEnabled(context: Context): Boolean = prefs(context).getBoolean("storeEnabled", false)
-
-    fun setStoreEnabled(context: Context, on: Boolean) {
-        prefs(context).edit().putBoolean("storeEnabled", on).apply()
-    }
-
-    /** The Stores section (GOG, Epic Games, Amazon Games): its rail item. Off by default. */
-    fun gameStoresEnabled(context: Context): Boolean = prefs(context).getBoolean("gameStoresEnabled", false)
+    fun gameStoresEnabled(context: Context): Boolean = prefs(context).getBoolean("gameStoresEnabled", true)
 
     fun setGameStoresEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("gameStoresEnabled", on).apply()
@@ -449,12 +447,22 @@ object SessionPrefs {
 
     /**
      * What the pad is to the Steam client: [CONTROLLER_DECK], a Steam Deck controller (Quick Access
-     * button, gyro, Steam Input's full treatment - SteamDeckPad), or [CONTROLLER_XBOX360], the plain
-     * Xbox 360 pad of earlier versions (QAM by the Guide+A chord).
+     * button, gyro, Steam Input's full treatment - SteamDeckPad), [CONTROLLER_STEAM], a 2025 Steam
+     * Controller (the same, plus grip sense and its own haptics), [CONTROLLER_DS4] or
+     * [CONTROLLER_DUALSENSE], a PlayStation pad with its touchpad fed by the trackpads, or
+     * [CONTROLLER_XBOX360], the plain Xbox 360 pad of earlier versions (QAM by the Guide+A chord).
      */
     fun steamController(context: Context): String =
         prefs(context).getString("steamController", CONTROLLER_DECK) ?: CONTROLLER_DECK
     fun setSteamController(context: Context, id: String) { prefs(context).edit().putString("steamController", id).apply() }
+    /** [steamController]'s choice as libfakeinput's pad type (FakeInputWriter.PAD_TYPE_*). */
+    fun padType(id: String): Int = when (id) {
+        CONTROLLER_STEAM -> com.droiddeck.launcher.input.FakeInputWriter.PAD_TYPE_STEAM
+        CONTROLLER_XBOX360 -> com.droiddeck.launcher.input.FakeInputWriter.PAD_TYPE_XBOX
+        CONTROLLER_DS4 -> com.droiddeck.launcher.input.FakeInputWriter.PAD_TYPE_DS4
+        CONTROLLER_DUALSENSE -> com.droiddeck.launcher.input.FakeInputWriter.PAD_TYPE_DUALSENSE
+        else -> com.droiddeck.launcher.input.FakeInputWriter.PAD_TYPE_DECK
+    }
 
     /**
      * Deck mode's performance overlay (mangoapp, beside gamescope): the QAM's Overlay Level draws
@@ -867,6 +875,74 @@ object SessionPrefs {
     fun setTextureLodBias(context: Context, choice: String) {
         prefs(context).edit().putString("textureLodBias", choice).apply()
         publishGameEnvironment(context)
+    }
+
+    fun gameTextureFiltering(context: Context, scope: String): GameTextureFiltering {
+        require(GameEnvironment.validScope(scope))
+        return gameTextureFiltering(context)[scope] ?: GameTextureFiltering()
+    }
+
+    fun gameTextureFiltering(context: Context): Map<String, GameTextureFiltering> {
+        val json = runCatching {
+            JSONObject(prefs(context).getString("gameTextureFiltering", null) ?: "{}")
+        }.getOrElse { JSONObject() }
+        return buildMap {
+            json.keys().forEach { scope ->
+                if (!GameEnvironment.validScope(scope)) return@forEach
+                val entry = json.optJSONObject(scope) ?: return@forEach
+                val anisotropy = entry.optInt("anisotropy").takeIf {
+                    entry.has("anisotropy") && it in TextureFiltering.ANISOTROPY
+                }
+                val lodBias = entry.optString("lodBias").takeIf {
+                    entry.has("lodBias") && it in TextureFiltering.LOD_BIAS
+                }
+                if (anisotropy != null || lodBias != null) {
+                    put(scope, GameTextureFiltering(anisotropy, lodBias))
+                }
+            }
+        }
+    }
+
+    fun setGameTextureAnisotropy(context: Context, scope: String, value: Int?) {
+        require(value == null || value in TextureFiltering.ANISOTROPY)
+        updateGameTextureFiltering(context, scope) { it.copy(anisotropy = value) }
+    }
+
+    fun setGameTextureLodBias(context: Context, scope: String, choice: String?) {
+        require(choice == null || choice in TextureFiltering.LOD_BIAS)
+        updateGameTextureFiltering(context, scope) { it.copy(lodBias = choice) }
+    }
+
+    fun clearGameTextureFiltering(context: Context, scope: String) {
+        require(GameEnvironment.validScope(scope))
+        val choices = gameTextureFiltering(context).toMutableMap()
+        if (choices.remove(scope) == null) return
+        saveGameTextureFiltering(context, choices)
+        publishGameEnvironment(context)
+    }
+
+    private fun updateGameTextureFiltering(
+        context: Context,
+        scope: String,
+        change: (GameTextureFiltering) -> GameTextureFiltering,
+    ) {
+        require(GameEnvironment.validScope(scope))
+        val choices = gameTextureFiltering(context).toMutableMap()
+        val next = change(choices[scope] ?: GameTextureFiltering())
+        if (next.anisotropy == null && next.lodBias == null) choices.remove(scope) else choices[scope] = next
+        saveGameTextureFiltering(context, choices)
+        publishGameEnvironment(context)
+    }
+
+    private fun saveGameTextureFiltering(context: Context, choices: Map<String, GameTextureFiltering>) {
+        val json = JSONObject()
+        choices.forEach { (id, choice) ->
+            json.put(id, JSONObject().apply {
+                choice.anisotropy?.let { put("anisotropy", it) }
+                choice.lodBias?.let { put("lodBias", it) }
+            })
+        }
+        prefs(context).edit().putString("gameTextureFiltering", json.toString()).apply()
     }
 
     /** Hands the change to the next game launch (GameEnvironmentStore); the running game keeps its own. */

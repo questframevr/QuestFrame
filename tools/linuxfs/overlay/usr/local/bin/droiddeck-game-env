@@ -168,7 +168,10 @@ def apply_config(env, config, app_id, fixes=None):
             raise ValueError("invalid environment value")
     # The app's texture filtering (Display page), as DXVK options appended after the profiles so
     # a DXVK_CONFIG entry of the user's keeps its own.
-    dxvk = config.get("dxvkConfig")
+    game_dxvk = config.get("dxvkConfigGames", {})
+    if not isinstance(game_dxvk, dict):
+        raise ValueError("invalid game dxvk configuration")
+    dxvk = game_dxvk.get(app_id, config.get("dxvkConfig"))
     if dxvk is not None:
         if not isinstance(dxvk, str) or "\0" in dxvk or len(dxvk) > 8192:
             raise ValueError("invalid dxvk configuration")
@@ -255,8 +258,9 @@ EVALUATOR_SCRIPT = re.compile(r"(?:^|[\\/])evaluatorscript_[0-9]+\.vdf$", re.IGN
 
 def mark_install_scripts(command, env):
     """The client is about to run a game's install scripts (iscriptevaluator.exe): mark every process
-    in them as already run first, so no redistributable installer starts - on first launch the
-    shared ones may still be downloading, and on ARM64 Proton the VC++ ones stop with an error."""
+    in them but a Vulkan runtime installer as already run first, so no redistributable installer
+    starts - on first launch the shared ones may still be downloading, and on ARM64 Proton the VC++
+    ones stop with an error."""
     if not any(arg.lower().replace("\\", "/").endswith("iscriptevaluator.exe") for arg in command):
         return
     root = env.get("STEAM_COMPAT_CLIENT_INSTALL_PATH") or str(Path.home() / ".local/share/Steam")
