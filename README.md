@@ -7,19 +7,6 @@
   </picture>
 </p>
 
-<p align="center">
-  <a href="https://github.com/questframevr/QuestFrame/releases">
-    <img src="https://img.shields.io/github/downloads/questframevr/QuestFrame/total?label=QuestFrame%20downloads&color=blue" alt="Total QuestFrame release downloads">
-  </a>
-  <img src="https://raw.githubusercontent.com/questframevr/QuestFrame/traffic-data/badge.svg" alt="QuestFrame repository views">
-</p>
-
-<p align="center">
-  <a href="https://github.com/PatTEMPlayzONYT/QuestDeck/releases">
-    <img src="https://img.shields.io/github/downloads/PatTEMPlayzONYT/QuestDeck/total?label=QuestDeck%20downloads&color=lightgrey" alt="Total QuestDeck release downloads (old repository)">
-  </a>
-  <img src="https://raw.githubusercontent.com/PatTEMPlayzONYT/QuestDeck/traffic-data/badge.svg" alt="QuestDeck repository views (old repository)">
-</p>
 
 QuestFrame is my Quest-focused fork of DroidDeck, aiming to bring a SteamOS-like experience to the Meta Quest 3 and Quest 3S: Valve's Steam client in Big Picture Mode, with Windows games through Valve's ARM64 Proton.
 
