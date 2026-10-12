@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DroidDeck</string>
+    <string name="app_name">QuestFrame</string>
     <string-array name="loading_hints">
         <item>При первом запуске будет загружен Steam. Это может занять несколько минут.</item>
         <item>По умолчанию при выходе из приложения Steam приостанавливается; при возвращении работа возобновляется с того же места.</item>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DroidDeck</string>
+    <string name="app_name">QuestFrame</string>
     <string-array name="loading_hints">
         <item>首次執行會下載 Steam，可能需要幾分鐘。</item>
         <item>預設情況下，離開應用程式會暫停 Steam；返回時會從上次中斷的地方繼續。</item>

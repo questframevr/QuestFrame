@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DroidDeck</string>
+    <string name="app_name">QuestFrame</string>
     <string-array name="loading_hints">
         <item>La primera vez se descarga Steam. Puede tardar unos minutos.</item>
         <item>De forma predeterminada, al salir de la app Steam se pausa y continúa donde lo dejaste cuando vuelves.</item>

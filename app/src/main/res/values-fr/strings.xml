@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">DroidDeck</string>
+    <string name="app_name">QuestFrame</string>
     <string-array name="loading_hints">
         <item>Le premier lancement télécharge Steam. Cela peut prendre quelques minutes.</item>
         <item>Par défaut, quitter l\'application met Steam en pause ; y revenir reprend là où vous vous étiez arrêté.</item>
