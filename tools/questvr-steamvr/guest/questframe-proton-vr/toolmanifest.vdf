@@ -1,0 +1,6 @@
+"manifest"
+{
+	"version" "2"
+	"commandline" "/questframe-proton-vr %verb%"
+	"use_tool_subprocess_reaper" "1"
+}

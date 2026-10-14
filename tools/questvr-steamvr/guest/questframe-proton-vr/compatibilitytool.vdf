@@ -1,0 +1,13 @@
+"compatibilitytools"
+{
+	"compat_tools"
+	{
+		"questframe-proton-vr"
+		{
+			"install_path" "."
+			"display_name" "QuestFrame Proton VR (x86, SteamVR)"
+			"from_oslist" "windows"
+			"to_oslist" "linux"
+		}
+	}
+}

@@ -1,0 +1,23 @@
+#!/bin/bash
+Q=/root/.local/share/questdeck-vr
+S=/root/.local/share/Steam
+P="$S/steamapps/common/Proton 10.0"
+[ -f "$P/proton" ] || P="$S/steamapps/common/Proton - Experimental"
+verb=$1
+case $verb in
+  getcompatpath | getnativepath) printf '%s\n' "$2"; exit 0 ;;
+esac
+[ -f "$P/proton" ] || { echo "questframe-proton-vr: Proton 10.0 is not installed" >&2; exit 1; }
+mkdir -p $Q/logs
+{
+  echo "== $(date) $verb $*"
+  env | grep -E '^(STEAM_COMPAT|SteamAppId|SteamGameId|DISPLAY|WAYLAND)' 
+} >> $Q/logs/proton-vr.log
+# script alone.
+export QF_STEAM_COMPAT_DATA_PATH="$STEAM_COMPAT_DATA_PATH"
+unset STEAM_COMPAT_DATA_PATH
+export LD_LIBRARY_PATH="$Q/SteamVR-linux/bin/linux64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_PRELOAD=$Q/drivers/questdeck/layer/libquestdeck_vrgame.so
+export WINEDEBUG=${WINEDEBUG:-+timestamp,+pid,+loaddll,err+all,warn+vrclient,fixme-all}
+export PROTON_LOG=${PROTON_LOG:-1} PROTON_LOG_DIR=$Q/logs
+exec $Q/bin/vrfex $Q/rootfs/usr/bin/python3 "$(dirname "$0")/proton-vr.py" "$P/proton" "$@" 2>> $Q/logs/proton-vr.log
