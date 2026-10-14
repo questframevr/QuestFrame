@@ -1,0 +1,23 @@
+#!/bin/sh
+Q=/root/.local/share/questdeck-vr
+FEXDIR=/root/.local/share/Steam/steamapps/common/FEX-Emu/usr
+C=$Q/fex-config
+mkdir -p $C /root/.cache/questdeck-vr-fex /run/droiddeck/fex
+cat > $C/Config.json.new <<JSON
+{
+  "Config": {
+    "RootFS": "$Q/rootfs",
+    "ThunkHostLibs": "$FEXDIR/lib/aarch64-linux-gnu/fex-emu/HostThunks",
+    "ThunkGuestLibs": "$FEXDIR/share/fex-emu/GuestThunks"
+  },
+  "ThunksDB": { "GL": 1, "Vulkan": 1 }
+}
+JSON
+cmp -s $C/Config.json.new $C/Config.json && rm $C/Config.json.new || mv $C/Config.json.new $C/Config.json
+printf '{ "ThunksDB": { "GL": 1, "Vulkan": 1 } }\n' > $C/ThunksConfig.json
+unset GLIBC_TUNABLES FEX_ROOTFS
+export FEX_APP_CONFIG_LOCATION=$C/ FEX_APP_DATA_LOCATION=/run/droiddeck/fex/ FEX_APP_CACHE_LOCATION=/root/.cache/questdeck-vr-fex/
+export FEX_SILENTLOG=${FEX_SILENTLOG:-1} FEX_OUTPUTLOG=stderr FEX_PORTABLE=1 FEX_THUNKCONFIG=$C/ThunksConfig.json
+export FEX_THUNKHOSTLIBS=$FEXDIR/lib/aarch64-linux-gnu/fex-emu/HostThunks FEX_THUNKGUESTLIBS=$FEXDIR/share/fex-emu/GuestThunks
+export FEX_SERVERSOCKETPATH=/run/droiddeck/fex-questdeck-vr.sock
+exec $FEXDIR/bin/FEX "$@"

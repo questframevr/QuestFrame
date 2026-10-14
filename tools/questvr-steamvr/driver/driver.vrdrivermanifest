@@ -1,0 +1,7 @@
+{
+	"alwaysActivate": true,
+	"name": "questdeck",
+	"directory": "",
+	"resourceOnly": false,
+	"hmd_presence": [ "*.*" ]
+}
