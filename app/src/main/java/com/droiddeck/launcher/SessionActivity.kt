@@ -2504,6 +2504,14 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback {
         runOnUiThread {
             loading.visible = false
             hud.start()
+            if (intent?.getBooleanExtra(EXTRA_OPEN_VR, false) == true && !isFinishing) {
+                intent.removeExtra(EXTRA_OPEN_VR)
+                startActivity(com.droiddeck.launcher.vr.QuestVrActivity.intent(this, com.droiddeck.launcher.vr.QuestVrActivity.MODE_THEATER))
+            }
+            if (intent?.getBooleanExtra(EXTRA_OPEN_STEAMVR, false) == true && !isFinishing) {
+                intent.removeExtra(EXTRA_OPEN_STEAMVR)
+                startActivity(com.droiddeck.launcher.vr.QuestVrActivity.intent(this, com.droiddeck.launcher.vr.QuestVrActivity.MODE_STEAMVR))
+            }
         }
     }
 
@@ -2582,6 +2590,8 @@ class SessionActivity : ComponentActivity(), SurfaceHolder.Callback {
 
     companion object {
         const val EXTRA_RETURN_HOME = "returnHome"
+        const val EXTRA_OPEN_VR = "openVr"
+        const val EXTRA_OPEN_STEAMVR = "openSteamVr"
         /** How long the leaving flood may take before the session closes without it. */
         private const val LEAVE_TIMEOUT_MS = 1_500L
         private const val TAG = "SessionActivity"

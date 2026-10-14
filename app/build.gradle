@@ -178,6 +178,7 @@ android {
     buildFeatures {
         compose true
         buildConfig true
+        prefab true
     }
 
     testOptions {
@@ -279,6 +280,7 @@ tasks.named('preBuild').configure { dependsOn(buildRustStores) }
 dependencies {
     // The runtime tarball is a zstd-compressed tar.
     implementation 'com.github.luben:zstd-jni:1.5.2-3@aar'
+    implementation 'org.khronos.openxr:openxr_loader_for_android:1.1.61'
     implementation 'org.apache.commons:commons-compress:1.27.1'
     // Bannerlator's Windows components come as .tar.xz (WinComponents).
     implementation 'org.tukaani:xz:1.10'

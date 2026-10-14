@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The VR section (Meta Quest). Experimental and English-only for now: translations follow once
+     the wording settles, so missing ones are not a lint error here. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="rail_vr">VR</string>
+    <string name="vr_page_title">VR</string>
+    <string name="vr_chip_headset">Meta Quest</string>
+    <string name="vr_chip_experimental">Experimental</string>
+
+    <string name="vr_home_title">VR Home</string>
+    <string name="vr_home_hint">A native OpenXR space on the headset: head and controller tracking, both eyes, at the display\'s own rate.</string>
+    <string name="vr_home_enter">Enter VR</string>
+
+    <string name="vr_theater_title">Steam in VR</string>
+    <string name="vr_theater_hint">Steam, its games or the desktop on a large screen in front of you. Your Touch controllers are the gamepad.</string>
+    <string name="vr_theater_play">Play Steam in VR</string>
+    <string name="vr_theater_resume">Show %1$s in VR</string>
+
+    <string name="vr_steamvr_title">SteamVR</string>
+    <string name="vr_steamvr_hint">SteamVR running on the headset itself, with QuestDeck as its headset driver. Experimental: needs SteamVR installed (Linux) and Debugging tools on.</string>
+    <string name="vr_steamvr_enter">Play SteamVR</string>
+    <string name="vr_steamvr_status">In development</string>
+    <string name="vr_steamvr_installed">SteamVR found</string>
+    <string name="vr_steamvr_missing">SteamVR not installed</string>
+
+    <string name="vr_controls_title">Controls in VR</string>
+    <string name="vr_controls_text">Sticks, triggers and A/B/X/Y work as on a gamepad. Grips are the bumpers, stick clicks are L3/R3, the left Menu button is Start. The Steam button and the Quick Access menu are on the panel under the screen: point at it and pull a trigger.</string>
+
+    <string name="vr_not_headset">VR needs a Meta Quest headset.</string>
+    <string name="vr_lib_missing">The VR library could not be loaded.</string>
+    <string name="vr_start_failed">The VR session could not be started.</string>
+    <string name="vr_no_session">Nothing is running to show in VR.</string>
+
+    <string name="vr_panel_exit">Exit VR</string>
+    <string name="vr_panel_recenter">Recenter</string>
+    <string name="vr_panel_closer">Closer</string>
+    <string name="vr_panel_farther">Farther</string>
+    <string name="vr_panel_bigger">Bigger</string>
+    <string name="vr_panel_smaller">Smaller</string>
+    <string name="vr_panel_steam">Steam</string>
+    <string name="vr_panel_qam">•••</string>
+</resources>

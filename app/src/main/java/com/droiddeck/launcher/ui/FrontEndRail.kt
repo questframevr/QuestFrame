@@ -50,6 +50,9 @@ import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.VideoLibrary
+import androidx.compose.material.icons.outlined.ViewInAr
+import androidx.compose.ui.platform.LocalContext
+import com.droiddeck.launcher.vr.QuestVrActivity
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -105,8 +108,10 @@ internal fun SideRail(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.width(if (iconOnly) 64.dp else 92.dp).background(colors.surface).padding(vertical = if (compact) 8.dp else 12.dp),
     ) {
+        val context = LocalContext.current
+        val vr = remember { QuestVrActivity.supported(context) }
         // Every section on screen at once: items shrink (to 44dp, still a touch target) before the rail scrolls.
-        val count = 6 + (if (s.gameStoresEnabled) 1 else 0) + (if (s.isHomeApp) 1 else 0)
+        val count = 6 + (if (s.gameStoresEnabled) 1 else 0) + (if (s.isHomeApp) 1 else 0) + (if (vr) 1 else 0)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
         val fit = (maxHeight / count - 4.dp).coerceIn(44.dp, if (iconOnly) 48.dp else if (compact) 52.dp else 60.dp)
         // A hop in flight moves the selection ahead of the page it is bringing.
@@ -115,6 +120,7 @@ internal fun SideRail(
             add("steam"); add("games")
             if (s.gameStoresEnabled) add("stores")
             add("desktop")
+            if (vr) add("vr")
             add("components")
             if (s.isHomeApp) add("android-apps")
             add("setup"); add("updates")
@@ -147,6 +153,7 @@ internal fun SideRail(
             // A section switched on in Setup comes in as the rail's own entrance; off, it folds away.
             if (s.gameStoresEnabled) RailItem(stringResource(R.string.rail_stores), Icons.Outlined.LocalMall, "stores", shown == "stores", compact, iconOnly, fit, count = s.storeDownloadsActive, place = place, onFocus = { onFocusSelect("stores") }) { onSelect("stores") }
             RailItem(stringResource(R.string.rail_desktop), Icons.Outlined.DesktopWindows, "desktop", shown == "desktop", compact, iconOnly, fit, place = place, onFocus = { onFocusSelect("desktop") }) { onSelect("desktop") }
+            if (vr) RailItem(stringResource(R.string.rail_vr), Icons.Outlined.ViewInAr, "vr", shown == "vr", compact, iconOnly, fit, place = place, onFocus = { onFocusSelect("vr") }) { onSelect("vr") }
             RailItem(stringResource(R.string.rail_components), Icons.Outlined.Layers, "components", shown == "components", compact, iconOnly, fit, place = place, onFocus = { onFocusSelect("components") }) { onSelect("components") }
             // Home mode's extra section goes last, so it shifts nothing above it.
             if (s.isHomeApp) RailItem(stringResource(R.string.rail_apps), Icons.Outlined.Apps, "android-apps", shown == "android-apps", compact, iconOnly, fit, place = place, onFocus = { onFocusSelect("android-apps") }) { onSelect("android-apps") }

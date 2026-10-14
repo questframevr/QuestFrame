@@ -234,6 +234,9 @@ class FrontEndActions(
     val onDismissPhantomGate: () -> Unit = {},
     val onStartWirelessAdbPairing: () -> Unit = {},
     val onOpenNotificationSettings: () -> Unit = {},
+    val onEnterVr: () -> Unit = {},
+    val onVrTheater: () -> Unit = {},
+    val onSteamVr: () -> Unit = {},
     val controller: ControllerActions? = null,
     val updates: UpdatesActions = UpdatesActions(),
 )

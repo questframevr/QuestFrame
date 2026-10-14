@@ -36,6 +36,7 @@
 
     <uses-feature android:name="android.hardware.vulkan.version" android:version="0x401000" android:required="true" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
+    <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="false" />
 
     <application
         android:name=".App"
@@ -146,6 +147,25 @@
             android:noHistory="true"
             android:permission="android.permission.DUMP"
             android:theme="@style/SessionTheme" />
+
+        <!-- The Meta Quest VR scene (an OpenXR session). com.oculus.intent.category.VR is what makes
+             Horizon OS hand the headset to this activity instead of showing it as a flat panel, and
+             the Khronos IMMERSIVE_HMD category marks it as an OpenXR app. No LAUNCHER category: it is
+             opened from the launcher's own button, not as a second icon. -->
+        <activity
+            android:name=".vr.QuestVrActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/SessionTheme"
+            android:screenOrientation="landscape"
+            android:resizeableActivity="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".SessionActivity"

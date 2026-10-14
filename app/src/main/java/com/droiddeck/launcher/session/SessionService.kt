@@ -87,6 +87,7 @@ class SessionService : Service() {
     private var suspendPolicy = SessionPrefs.SUSPEND_MANUAL
     private var steamDownloadsInBackground = false
     private var activityVisible = true
+    private var vrHolding = false
     private var screenOn = true
     private var manualPauseRequested = false
     /** An explicit Steam sleep request is independent of the background policy. */
@@ -179,6 +180,13 @@ class SessionService : Service() {
                 activityVisible = true
                 suspendDownloadNow = false
                 resumeSteamSleepOnReturn()
+                suspendAttemptFailed = false
+                updateSuspendPolicy()
+                return START_NOT_STICKY
+            }
+            ACTION_VR_HOLD, ACTION_VR_RELEASE -> {
+                vrHolding = intent.action == ACTION_VR_HOLD
+                if (vrHolding) manualPauseRequested = false
                 suspendAttemptFailed = false
                 updateSuspendPolicy()
                 return START_NOT_STICKY
@@ -1331,11 +1339,12 @@ class SessionService : Service() {
 
     private fun updateSuspendPolicy() {
         if (!SessionState.running) return
-        if (suspendPolicy == SessionPrefs.SUSPEND_MANUAL && (!activityVisible || !screenOn)) {
+        val vrHolding = vrHolding || com.droiddeck.launcher.vr.QuestVrActivity.holdingSession
+        if (suspendPolicy == SessionPrefs.SUSPEND_MANUAL && !vrHolding && (!activityVisible || !screenOn)) {
             manualPauseRequested = true
         }
         val controller = suspendController ?: return
-        val hidden = !activityVisible || !screenOn
+        val hidden = !vrHolding && (!activityVisible || !screenOn)
         val downloadsBlockingSuspend = steamDownloadsInBackground && SessionState.mode == MODE_STEAM &&
             suspendPolicy != SessionPrefs.SUSPEND_NEVER && hidden && downloadActive && !suspendDownloadNow
         if (downloadsBlockingSuspend) acquireLocks()
@@ -1827,6 +1836,8 @@ class SessionService : Service() {
         private const val ACTION_SUSPEND_POLICY_CHANGED = "com.droiddeck.launcher.SUSPEND_POLICY_CHANGED"
         private const val ACTION_ACTIVITY_VISIBLE = "com.droiddeck.launcher.ACTIVITY_VISIBLE"
         private const val ACTION_ACTIVITY_HIDDEN = "com.droiddeck.launcher.ACTIVITY_HIDDEN"
+        private const val ACTION_VR_HOLD = "com.droiddeck.launcher.VR_HOLD"
+        private const val ACTION_VR_RELEASE = "com.droiddeck.launcher.VR_RELEASE"
         private const val ACTION_TRACK_AUXILIARY = "com.droiddeck.launcher.TRACK_AUXILIARY"
         private const val ACTION_STOP_AUXILIARY = "com.droiddeck.launcher.STOP_AUXILIARY"
         private const val ACTION_AUXILIARY_EXITED = "com.droiddeck.launcher.AUXILIARY_EXITED"
@@ -1891,6 +1902,11 @@ class SessionService : Service() {
             if (!SessionState.running) return
             val action = if (visible) ACTION_ACTIVITY_VISIBLE else ACTION_ACTIVITY_HIDDEN
             context.startService(Intent(context, SessionService::class.java).setAction(action))
+        }
+
+        fun setVrHolding(context: Context, holding: Boolean) {
+            if (!SessionState.running) return
+            context.startService(Intent(context, SessionService::class.java).setAction(if (holding) ACTION_VR_HOLD else ACTION_VR_RELEASE))
         }
 
         fun resume(context: Context) {

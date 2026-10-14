@@ -401,12 +401,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        if (intent?.component?.className == SessionActivity::class.java.name) {
+        val vr = intent?.component?.className == com.droiddeck.launcher.vr.QuestVrActivity::class.java.name
+        if (intent?.component?.className == SessionActivity::class.java.name || vr) {
             if (flood != null) return
             // Started by a blue button: it floods the page first. A running session is re-joined
-            // as before, rising over the front end.
             val from = com.droiddeck.launcher.ui.LaunchOrigin.take()
-            if (from != null && !SessionState.running && com.droiddeck.launcher.ui.Motion.scale != 0f) {
+            if (from != null && (vr || !SessionState.running) && com.droiddeck.launcher.ui.Motion.scale != 0f) {
                 flood = PendingFlood(from, intent)
                 return
             }
@@ -822,6 +822,15 @@ class MainActivity : ComponentActivity() {
                             startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                                 .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
                                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        },
+                        onEnterVr = { startActivity(com.droiddeck.launcher.vr.QuestVrActivity.intent(this, com.droiddeck.launcher.vr.QuestVrActivity.MODE_HOME)) },
+                        onSteamVr = {
+                            if (SessionState.running) startActivity(com.droiddeck.launcher.vr.QuestVrActivity.intent(this, com.droiddeck.launcher.vr.QuestVrActivity.MODE_STEAMVR))
+                            else startSession(Intent(this, SessionActivity::class.java).putExtra(SessionActivity.EXTRA_OPEN_STEAMVR, true), steamSession = true)
+                        },
+                        onVrTheater = {
+                            if (SessionState.running) startActivity(com.droiddeck.launcher.vr.QuestVrActivity.intent(this, com.droiddeck.launcher.vr.QuestVrActivity.MODE_THEATER))
+                            else startSession(Intent(this, SessionActivity::class.java).putExtra(SessionActivity.EXTRA_OPEN_VR, true), steamSession = true)
                         },
                         updates = updates.actions(),
                         controller = ControllerActions(

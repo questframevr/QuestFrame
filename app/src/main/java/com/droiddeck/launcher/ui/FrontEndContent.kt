@@ -288,6 +288,10 @@ private fun Content(
         GamesPage(s, a, selected, onSelect, modifier)
         return
     }
+    if (selected == "vr") {
+        VrPage(s, a, modifier)
+        return
+    }
     // Desktop is the Steam tab's shape: a hero with its lifted sheet, and shelves under it.
     if (selected == "desktop") {
         DesktopPage(s, a, modifier, onSelect)

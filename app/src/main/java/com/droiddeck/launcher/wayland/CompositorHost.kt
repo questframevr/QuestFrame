@@ -41,6 +41,10 @@ object CompositorHost {
         // connects, and kept the first session's (the Thor's 1920x1080 top screen letterboxed the bottom
         // one's session to 16:9). A running session keeps the size it was started at.
         if (!SessionState.running) WaylandCompositor.nativeSetOutputSize(outputWidth, outputHeight)
+        if (started && overlay != null) {
+            underlay = surface
+            return false
+        }
         if (started) {
             attached = surface
             WaylandCompositor.nativeSetSurface(surface)
@@ -122,10 +126,40 @@ object CompositorHost {
     @Synchronized
     fun detach(surface: Surface?) {
         if (!started) return
+        if (surface != null && surface === underlay) underlay = null
         if (surface != null && attached != null && attached !== surface) return
         attached = null
         pauseVsync()
         WaylandCompositor.nativeSetSurface(null)
+    }
+
+    private var overlay: Surface? = null
+    private var underlay: Surface? = null
+
+    @Synchronized
+    fun attachOverlay(surface: Surface): Boolean {
+        if (!started) return false
+        if (overlay == null) underlay = attached
+        overlay = surface
+        attached = surface
+        if (SessionState.hdr) WaylandCompositor.nativeSetZeroCopy(false)
+        WaylandCompositor.nativeLog("screen", "picture moved to the headset")
+        WaylandCompositor.nativeSetSurface(surface)
+        resumeVsync()
+        return true
+    }
+
+    @Synchronized
+    fun detachOverlay(surface: Surface) {
+        if (!started || overlay !== surface) return
+        overlay = null
+        val back = underlay?.takeIf { it.isValid }
+        underlay = null
+        attached = back
+        if (SessionState.hdr) WaylandCompositor.nativeSetZeroCopy(true)
+        WaylandCompositor.nativeLog("screen", if (back != null) "picture back from the headset" else "headset closed; no screen until the session is opened")
+        WaylandCompositor.nativeSetSurface(back)
+        if (back == null) pauseVsync()
     }
 
     /** Frames are only worth drawing while a Surface is attached. */
